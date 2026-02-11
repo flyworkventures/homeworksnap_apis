@@ -21,7 +21,8 @@ const chatRoutes = require('./routes/chatRoutes');
 
 // Create Express app
 const app = express();
-const PORT = process.env.PORT || 3000;
+// Default 3026; if .env has PORT=3000 (legacy), use 3026 to avoid conflict
+const PORT = Number(process.env.PORT) === 3000 ? 3026 : (Number(process.env.PORT) || 3026);
 
 // Trust proxy (important for rate limiting behind reverse proxy)
 app.set('trust proxy', 1);

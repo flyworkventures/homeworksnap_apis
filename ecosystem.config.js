@@ -6,13 +6,13 @@
 module.exports = {
   apps: [
     {
-      name: 'breathpath-api',
-      script: './src/server.js',
+      name: 'homeworksnap',
+      script: './server.js',
       instances: 'max', // Use all available CPU cores
       exec_mode: 'cluster', // Cluster mode for better performance
       env: {
         NODE_ENV: 'production',
-        PORT: 3000,
+        PORT: 3026,
       },
       error_file: './logs/pm2-error.log',
       out_file: './logs/pm2-out.log',

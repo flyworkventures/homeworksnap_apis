@@ -24,14 +24,172 @@ SQL şeması `database/schema.sql` dosyasında bulunmaktadır.
 ## API Endpoints
 
 ### Authentication
-- `POST /api/auth/signin` - Kullanıcı girişi/kaydı
-- `POST /api/auth/refresh` - Token yenileme
-- `POST /api/auth/logout` - Çıkış
-- `GET /api/auth/me` - Kullanıcı bilgileri
-- `PATCH /api/auth/me` - Profil güncelleme
-- `POST /api/auth/me/photo` - Profil fotoğrafı yükleme
-- `DELETE /api/auth/me/photo` - Profil fotoğrafı silme
-- `DELETE /api/auth/me` - Hesap silme
+
+#### Kullanıcı Girişi/Kaydı
+- **Endpoint:** `POST /api/auth/signin`
+- **Auth:** Gerekli değil
+- **Body:**
+  ```json
+  {
+    "uid": "firebase_uid",
+    "username": "kullanici_adi",
+    "email": "email@example.com",
+    "authProvider": "google" | "facebook" | "apple" | "guest"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "success": true,
+    "data": {
+      "user": { ... },
+      "tokens": {
+        "accessToken": "...",
+        "refreshToken": "..."
+      }
+    }
+  }
+  ```
+
+#### Token Yenileme
+- **Endpoint:** `POST /api/auth/refresh`
+- **Auth:** Gerekli değil
+- **Body:**
+  ```json
+  {
+    "refreshToken": "refresh_token_string"
+  }
+  ```
+
+#### Çıkış
+- **Endpoint:** `POST /api/auth/logout`
+- **Auth:** Gerekli (Bearer token)
+- **Body:**
+  ```json
+  {
+    "refreshToken": "refresh_token_string"
+  }
+  ```
+
+#### Kullanıcı Bilgileri
+- **Endpoint:** `GET /api/auth/me`
+- **Auth:** Gerekli (Bearer token)
+- **Response:**
+  ```json
+  {
+    "success": true,
+    "data": {
+      "uid": "firebase_uid",
+      "username": "kullanici_adi",
+      "email": "email@example.com",
+      "authProvider": "google",
+      "profilePhotoUrl": "https://cdn.example.com/profiles/photo.jpg",
+      "lastActive": "2024-01-01T00:00:00.000Z",
+      "accountCreatedDate": "2024-01-01T00:00:00.000Z"
+    }
+  }
+  ```
+
+#### Profil Güncelleme
+- **Endpoint:** `PATCH /api/auth/me`
+- **Auth:** Gerekli (Bearer token)
+- **Body:** (En az bir alan gerekli)
+  ```json
+  {
+    "username": "yeni_kullanici_adi",  // Opsiyonel
+    "profilePhotoUrl": "https://cdn.example.com/photo.jpg"  // Opsiyonel
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "success": true,
+    "message": "Profile updated successfully",
+    "data": {
+      "uid": "firebase_uid",
+      "username": "yeni_kullanici_adi",
+      "email": "email@example.com",
+      "authProvider": "google",
+      "profilePhotoUrl": "https://cdn.example.com/profiles/photo.jpg",
+      "lastActive": "2024-01-01T00:00:00.000Z",
+      "accountCreatedDate": "2024-01-01T00:00:00.000Z"
+    }
+  }
+  ```
+- **Notlar:**
+  - Username maksimum 100 karakter olabilir
+  - Username boş olamaz (sadece whitespace içeremez)
+  - ProfilePhotoUrl maksimum 500 karakter olabilir
+  - En az bir alan (username veya profilePhotoUrl) gönderilmelidir
+
+#### Profil Fotoğrafı Yükleme
+- **Endpoint:** `POST /api/auth/me/photo`
+- **Auth:** Gerekli (Bearer token)
+- **Content-Type:** `multipart/form-data`
+- **Body:** 
+  - `photo` (file): Yüklenecek fotoğraf dosyası
+- **Response:**
+  ```json
+  {
+    "success": true,
+    "message": "Profile photo uploaded successfully",
+    "data": {
+      "profilePhotoUrl": "https://homeworksnap.b-cdn.net/profiles/user_uid_filename.jpg",
+      "user": {
+        "uid": "firebase_uid",
+        "username": "kullanici_adi",
+        "email": "email@example.com",
+        "authProvider": "google",
+        "profilePhotoUrl": "https://homeworksnap.b-cdn.net/profiles/user_uid_filename.jpg",
+        "lastActive": "2024-01-01T00:00:00.000Z",
+        "accountCreatedDate": "2024-01-01T00:00:00.000Z"
+      }
+    }
+  }
+  ```
+- **Notlar:**
+  - Fotoğraf Bunny CDN'e `profiles/` klasörüne yüklenir
+  - Eski profil fotoğrafı otomatik olarak silinir
+  - Desteklenen formatlar: JPG, JPEG, PNG, GIF, WEBP
+  - Maksimum dosya boyutu: 10MB
+
+#### Profil Fotoğrafı Silme
+- **Endpoint:** `DELETE /api/auth/me/photo`
+- **Auth:** Gerekli (Bearer token)
+- **Response:**
+  ```json
+  {
+    "success": true,
+    "message": "Profile photo deleted successfully",
+    "data": {
+      "user": {
+        "uid": "firebase_uid",
+        "username": "kullanici_adi",
+        "email": "email@example.com",
+        "authProvider": "google",
+        "profilePhotoUrl": null,
+        "lastActive": "2024-01-01T00:00:00.000Z",
+        "accountCreatedDate": "2024-01-01T00:00:00.000Z"
+      }
+    }
+  }
+  ```
+- **Notlar:**
+  - Fotoğraf hem veritabanından hem de CDN'den silinir
+  - Eğer profil fotoğrafı yoksa hata döner
+
+#### Hesap Silme
+- **Endpoint:** `DELETE /api/auth/me`
+- **Auth:** Gerekli (Bearer token)
+- **Body:**
+  ```json
+  {
+    "refreshToken": "refresh_token_string"
+  }
+  ```
+- **Notlar:**
+  - Kullanıcı hesabı soft delete ile silinir (is_active = false)
+  - Tüm refresh token'lar iptal edilir
 
 ### Homework Images
 - `POST /api/homework/images` - Ödev fotoğrafı yükleme (multipart/form-data, field: "image")

@@ -21,8 +21,8 @@ const chatRoutes = require('./routes/chatRoutes');
 
 // Create Express app
 const app = express();
-// Default 3026; if .env has PORT=3000 (legacy), use 3026 to avoid conflict
-const PORT = Number(process.env.PORT) === 3000 ? 3026 : (Number(process.env.PORT) || 3026);
+// Use PORT from .env or default to 3000
+const PORT = Number(process.env.PORT) || 3000;
 
 // Trust proxy (important for rate limiting behind reverse proxy)
 app.set('trust proxy', 1);
@@ -66,6 +66,12 @@ if (process.env.NODE_ENV === 'development') {
   }));
 }
 
+// Debug: Log all incoming requests (BEFORE routes)
+app.use((req, res, next) => {
+  logger.info(`[${new Date().toISOString()}] ${req.method} ${req.path} - IP: ${req.ip}`);
+  next();
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
@@ -76,13 +82,13 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Apply rate limiting to all API routes (BEFORE routes)
+app.use('/api', apiLimiter);
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/homework/images', homeworkRoutes);
 app.use('/api/chats', chatRoutes);
-
-// Apply rate limiting to all API routes
-app.use('/api', apiLimiter);
 
 // 404 handler
 app.use(notFoundHandler);

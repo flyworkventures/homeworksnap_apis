@@ -6,6 +6,7 @@
 const rateLimit = require('express-rate-limit');
 
 // General API rate limiter
+// Skip chat routes as they have their own rate limiter
 const apiLimiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // Limit each IP to 100 requests per windowMs
@@ -19,6 +20,10 @@ const apiLimiter = rateLimit({
   // Use IP address for rate limiting
   keyGenerator: (req) => {
     return req.ip || req.connection.remoteAddress;
+  },
+  // Skip chat routes - they have their own rate limiter
+  skip: (req) => {
+    return req.path.startsWith('/api/chats');
   },
 });
 
@@ -45,8 +50,30 @@ const registerLimiter = rateLimit({
   },
 });
 
+// Chat-specific rate limiter (more lenient for chat messages)
+const chatLimiter = rateLimit({
+  windowMs: parseInt(process.env.CHAT_RATE_LIMIT_WINDOW_MS) || 1 * 60 * 1000, // 1 minute
+  max: parseInt(process.env.CHAT_RATE_LIMIT_MAX_REQUESTS) || 30, // Limit each IP to 30 requests per minute
+  message: {
+    success: false,
+    error: 'Too many chat messages, please slow down',
+    code: 'CHAT_RATE_LIMIT_EXCEEDED',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress;
+  },
+  // Skip rate limiting if user is authenticated (optional - can be removed if you want to rate limit authenticated users too)
+  skip: (req) => {
+    // Rate limit all requests, including authenticated ones
+    return false;
+  },
+});
+
 module.exports = {
   apiLimiter,
   authLimiter,
   registerLimiter,
+  chatLimiter,
 };

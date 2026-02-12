@@ -267,8 +267,8 @@ async function sendChatMessageToWebhook(chatId, message, messageHistory = [], ma
 async function sendChatMessageToWebhookInternal(chatId, message, messageHistory = []) {
   const webhookUrl = process.env.N8N_WEBHOOK_URL_CHAT;
   
-  if (!webhookUrl) {
-    logger.error('N8N_WEBHOOK_URL_CHAT is not configured');
+  if (!webhookUrl || webhookUrl.trim() === '') {
+    logger.error('N8N_WEBHOOK_URL_CHAT is not configured or is empty');
     return {
       success: false,
       error: 'N8N_WEBHOOK_URL_CHAT is not configured',
@@ -277,7 +277,6 @@ async function sendChatMessageToWebhookInternal(chatId, message, messageHistory 
   }
 
   try {
-
     const payload = {
       chatId,
       message,
@@ -286,7 +285,11 @@ async function sendChatMessageToWebhookInternal(chatId, message, messageHistory 
     };
 
     logger.info(`Sending chat message to n8n webhook: ${webhookUrl}`);
-    logger.info(`Payload:`, { chatId, message, messageHistoryLength: messageHistory.length });
+    logger.info(`Payload:`, { 
+      chatId, 
+      message: message.substring(0, 100), // Log first 100 chars
+      messageHistoryLength: messageHistory.length 
+    });
 
     const response = await axios.post(webhookUrl, payload, {
       headers: {
@@ -302,7 +305,8 @@ async function sendChatMessageToWebhookInternal(chatId, message, messageHistory 
       },
     });
 
-    logger.info(`n8n webhook response status: ${response.status}`);
+    logger.info(`n8n chat webhook response status: ${response.status}`);
+    logger.info(`n8n chat webhook response data:`, JSON.stringify(response.data).substring(0, 500));
 
     if (response.status >= 200 && response.status < 300) {
       // Ensure UTF-8 encoding for all response data
@@ -327,12 +331,17 @@ async function sendChatMessageToWebhookInternal(chatId, message, messageHistory 
       };
     }
   } catch (error) {
-    logger.error('n8n webhook error:', {
+    logger.error('n8n chat webhook error:', {
       message: error.message,
+      code: error.code,
+      webhookUrl: webhookUrl,
+      chatId: chatId,
       response: error.response ? {
         status: error.response.status,
+        statusText: error.response.statusText,
         data: error.response.data,
       } : null,
+      stack: error.stack,
     });
 
     // Don't throw error, return error object instead (for retry mechanism)
@@ -341,6 +350,22 @@ async function sendChatMessageToWebhookInternal(chatId, message, messageHistory 
         success: false,
         error: 'n8n webhook timeout - request took too long',
         code: 'TIMEOUT',
+      };
+    }
+
+    if (error.code === 'ECONNREFUSED') {
+      return {
+        success: false,
+        error: 'n8n webhook connection refused - server may be down',
+        code: 'CONNECTION_REFUSED',
+      };
+    }
+
+    if (error.code === 'ENOTFOUND') {
+      return {
+        success: false,
+        error: `n8n webhook host not found: ${webhookUrl}`,
+        code: 'HOST_NOT_FOUND',
       };
     }
 

@@ -11,7 +11,6 @@ const compression = require('compression');
 const morgan = require('morgan');
 const logger = require('./utils/logger');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
-const { apiLimiter } = require('./middleware/rateLimiter');
 const { cleanupExpiredTokens } = require('./utils/jwt');
 
 // Import routes
@@ -81,9 +80,6 @@ app.get('/health', (req, res) => {
     uptime: process.uptime(),
   });
 });
-
-// Apply rate limiting to all API routes (BEFORE routes)
-app.use('/api', apiLimiter);
 
 // API routes
 app.use('/api/auth', authRoutes);

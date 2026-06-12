@@ -1,7 +1,7 @@
 {
-  "name": "breathpath-api",
+  "name": "homework-api",
   "version": "1.0.0",
-  "description": "BreathPath API - Scalable backend for breathing exercises app",
+  "description": "Homework API - Scalable backend for homework helper app",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -11,8 +11,8 @@
   },
   "keywords": [
     "api",
-    "breathing",
-    "exercises",
+    "homework",
+    "education",
     "jwt",
     "authentication"
   ],

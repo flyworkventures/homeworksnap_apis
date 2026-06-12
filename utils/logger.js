@@ -36,7 +36,7 @@ const logger = winston.createLogger({
     })(),
     winston.format.json()
   ),
-  defaultMeta: { service: 'breathpath-api' },
+  defaultMeta: { service: 'homework-api' },
   transports: [
     // Write all logs to console
     new winston.transports.Console({

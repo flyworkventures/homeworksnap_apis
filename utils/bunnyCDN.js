@@ -20,7 +20,7 @@ async function uploadFile(fileBuffer, fileName, uid, options = {}) {
     const storageZoneName = process.env.BUNNY_STORAGE_ZONE_NAME;
     const storageZonePassword = process.env.BUNNY_STORAGE_ZONE_PASSWORD;
     // Storage path format: BUNNY_STORAGE_PATH/profiles/filename
-    // Example: breathpath.b-cdn.net/profiles/filename.png
+    // Example: homework.b-cdn.net/profiles/filename.png
     const storagePath = process.env.BUNNY_STORAGE_PATH || '';
 
     if (!storageZoneName || !storageZonePassword) {
@@ -88,7 +88,7 @@ async function uploadFile(fileBuffer, fileName, uid, options = {}) {
 
     // Construct CDN URL
     // URL format: https://{storage-path}/{folder}/{filename}
-    // Example: https://breathpath.b-cdn.net/profiles/filename.png or homework/filename.png
+    // Example: https://homework.b-cdn.net/profiles/filename.png or homework/filename.png
     // folder variable is already defined above (line 45)
     let cdnUrl;
     if (storagePath && storagePath.trim()) {
@@ -157,7 +157,7 @@ async function deleteFile(fileUrl) {
 
     // Extract file path from CDN URL
     // URL format: https://{storage-path}/profiles/{filename}
-    // Example: https://breathpath.b-cdn.net/profiles/filename.png
+    // Example: https://homework.b-cdn.net/profiles/filename.png
     try {
       const urlObj = new URL(fileUrl);
       // Get the path after domain

@@ -17,6 +17,7 @@ const { cleanupExpiredTokens } = require('./utils/jwt');
 const authRoutes = require('./routes/authRoutes');
 const homeworkRoutes = require('./routes/homeworkRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const panelRoutes = require('./routes/panel');
 
 // Create Express app
 const app = express();
@@ -44,7 +45,7 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Panel-Api-Key', 'x-panel-api-key'],
 }));
 
 // Body parsing middleware
@@ -85,6 +86,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/homework/images', homeworkRoutes);
 app.use('/api/chats', chatRoutes);
+app.use('/panel', panelRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

@@ -5,6 +5,7 @@
 
 const axios = require('axios');
 const logger = require('./logger');
+const { langDisplayName } = require('./userLang');
 
 /**
  * Ensure string is properly UTF-8 encoded
@@ -148,6 +149,7 @@ async function sendHomeworkImageToWebhookInternal(imageUrl, userId, chatId = nul
       userId,
       chatId,
       userLang,
+      userLangName: langDisplayName(userLang),
       timestamp: new Date().toISOString(),
     };
 
@@ -287,6 +289,7 @@ async function sendChatMessageToWebhookInternal(chatId, message, messageHistory 
       message,
       messageHistory,
       userLang,
+      userLangName: langDisplayName(userLang),
       timestamp: new Date().toISOString(),
     };
 

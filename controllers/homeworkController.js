@@ -7,26 +7,13 @@ const db = require('../config/database');
 const logger = require('../utils/logger');
 const { uploadFile, deleteFile } = require('../utils/bunnyCDN');
 const { sendHomeworkImageToWebhook } = require('../utils/n8nWebhook');
-
-const VALID_LANGS = ['en', 'tr', 'de', 'fr', 'es', 'it', 'pt', 'ru', 'ar', 'zh', 'ja', 'ko'];
-
-const resolveUserLang = (req) => {
-  const raw =
-    req.body?.language ||
-    req.body?.lang ||
-    req.body?.userLang ||
-    req.headers['x-user-lang'] ||
-    req.headers['accept-language']?.split(',')[0]?.split('-')[0] ||
-    'en';
-  const lang = String(raw).trim().toLowerCase().slice(0, 5);
-  return VALID_LANGS.includes(lang) ? lang : 'en';
-};
+const { resolveUserLang } = require('../utils/userLang');
 
 /**
  * Upload homework image
  * POST /api/homework/images
  * Content-Type: multipart/form-data
- * Body: image (file), language (optional, e.g. 'tr' | 'en')
+ * Body: image (file), language (optional, e.g. 'tr' | 'en' | 'de' ...)
  */
 const uploadHomeworkImage = async (req, res, next) => {
   try {

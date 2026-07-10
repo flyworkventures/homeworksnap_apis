@@ -6,6 +6,7 @@
 const db = require('../config/database');
 const logger = require('../utils/logger');
 const { sendChatMessageToWebhook } = require('../utils/n8nWebhook');
+const { resolveUserLang } = require('../utils/userLang');
 
 /**
  * Get user's chats
@@ -197,20 +198,6 @@ const getChatById = async (req, res, next) => {
     logger.error('Get chat by ID error:', error);
     next(error);
   }
-};
-
-const VALID_LANGS = ['en', 'tr', 'de', 'fr', 'es', 'it', 'pt', 'ru', 'ar', 'zh', 'ja', 'ko'];
-
-const resolveUserLang = (req) => {
-  const raw =
-    req.body?.language ||
-    req.body?.lang ||
-    req.body?.userLang ||
-    req.headers['x-user-lang'] ||
-    req.headers['accept-language']?.split(',')[0]?.split('-')[0] ||
-    'en';
-  const lang = String(raw).trim().toLowerCase().slice(0, 5);
-  return VALID_LANGS.includes(lang) ? lang : 'en';
 };
 
 /**

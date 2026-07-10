@@ -91,11 +91,28 @@ const uploadHomeworkImage = async (req, res, next) => {
       [chatId, homeworkImageId]
     );
 
-    // Add first message: User's image
+    // Add first message: User's image (localized by app language)
+    const uploadCaptions = {
+      tr: 'Ödev fotoğrafı yüklendi',
+      en: 'Homework photo uploaded',
+      de: 'Hausaufgabenfoto hochgeladen',
+      ar: 'تم رفع صورة الواجب',
+      fr: 'Photo de devoir téléchargée',
+      ko: '숙제 사진이 업로드되었습니다',
+      ja: '宿題の写真がアップロードされました',
+      es: 'Foto de la tarea subida',
+      it: 'Foto del compito caricata',
+      hi: 'होमवर्क फ़ोटो अपलोड हो गई',
+      pt: 'Foto do dever enviada',
+      ru: 'Фото домашнего задания загружено',
+    };
+    const uploadCaption =
+      uploadCaptions[userLang] || uploadCaptions.en || 'Homework photo uploaded';
+
     await db.query(
       `INSERT INTO chat_messages (chat_id, role, content, image_url)
        VALUES (?, 'user', ?, ?)`,
-      [chatId, 'Ödev fotoğrafı yüklendi', cdnUrl]
+      [chatId, uploadCaption, cdnUrl]
     );
 
     // Send to n8n webhook asynchronously (don't wait for response)

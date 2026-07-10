@@ -199,16 +199,31 @@ const getChatById = async (req, res, next) => {
   }
 };
 
+const VALID_LANGS = ['en', 'tr', 'de', 'fr', 'es', 'it', 'pt', 'ru', 'ar', 'zh', 'ja', 'ko'];
+
+const resolveUserLang = (req) => {
+  const raw =
+    req.body?.language ||
+    req.body?.lang ||
+    req.body?.userLang ||
+    req.headers['x-user-lang'] ||
+    req.headers['accept-language']?.split(',')[0]?.split('-')[0] ||
+    'en';
+  const lang = String(raw).trim().toLowerCase().slice(0, 5);
+  return VALID_LANGS.includes(lang) ? lang : 'en';
+};
+
 /**
  * Send message to chat
  * POST /api/chats/:id/messages
- * Body: { message: string }
+ * Body: { message: string, language?: string }
  */
 const sendMessage = async (req, res, next) => {
   try {
     const { uid } = req.user;
     const { id } = req.params;
     const { message } = req.body;
+    const userLang = resolveUserLang(req);
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return res.status(400).json({
@@ -283,7 +298,7 @@ const sendMessage = async (req, res, next) => {
         imageUrl: msg.image_url || null,
       }));
 
-      const webhookResult = await sendChatMessageToWebhook(id, message.trim(), history);
+      const webhookResult = await sendChatMessageToWebhook(id, message.trim(), history, userLang);
       
       if (webhookResult.success && webhookResult.data) {
         let responseData = webhookResult.data;

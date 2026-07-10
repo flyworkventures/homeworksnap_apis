@@ -111,12 +111,13 @@ async function retryWebhook(webhookFunction, maxRetries = 3, baseDelay = 2000) {
  * @param {string} imageUrl - CDN URL of the homework image
  * @param {string} userId - User ID
  * @param {string} chatId - Chat ID (optional, for new chats)
+ * @param {string} userLang - User language code (e.g. 'tr', 'en')
  * @param {number} maxRetries - Maximum retry attempts (default: 3)
  * @returns {Promise<Object>} n8n response
  */
-async function sendHomeworkImageToWebhook(imageUrl, userId, chatId = null, maxRetries = 3) {
+async function sendHomeworkImageToWebhook(imageUrl, userId, chatId = null, userLang = 'en', maxRetries = 3) {
   return retryWebhook(async () => {
-    return await sendHomeworkImageToWebhookInternal(imageUrl, userId, chatId);
+    return await sendHomeworkImageToWebhookInternal(imageUrl, userId, chatId, userLang);
   }, maxRetries);
 }
 
@@ -125,9 +126,10 @@ async function sendHomeworkImageToWebhook(imageUrl, userId, chatId = null, maxRe
  * @param {string} imageUrl - CDN URL of the homework image
  * @param {string} userId - User ID
  * @param {string} chatId - Chat ID (optional, for new chats)
+ * @param {string} userLang - User language code (e.g. 'tr', 'en')
  * @returns {Promise<Object>} n8n response
  */
-async function sendHomeworkImageToWebhookInternal(imageUrl, userId, chatId = null) {
+async function sendHomeworkImageToWebhookInternal(imageUrl, userId, chatId = null, userLang = 'en') {
   const webhookUrl = process.env.N8N_WEBHOOK_URL_HOMEWORK_IMAGE;
   
   if (!webhookUrl) {
@@ -145,11 +147,12 @@ async function sendHomeworkImageToWebhookInternal(imageUrl, userId, chatId = nul
       imageUrl,
       userId,
       chatId,
+      userLang,
       timestamp: new Date().toISOString(),
     };
 
     logger.info(`Sending homework image to n8n webhook: ${webhookUrl}`);
-    logger.info(`Payload:`, { imageUrl, userId, chatId });
+    logger.info(`Payload:`, { imageUrl, userId, chatId, userLang });
 
     const response = await axios.post(webhookUrl, payload, {
       headers: {
@@ -248,12 +251,13 @@ async function sendHomeworkImageToWebhookInternal(imageUrl, userId, chatId = nul
  * @param {string} chatId - Chat ID
  * @param {string} message - User message
  * @param {Array} messageHistory - Previous messages in the chat
+ * @param {string} userLang - User language code (e.g. 'tr', 'en')
  * @param {number} maxRetries - Maximum retry attempts (default: 3)
  * @returns {Promise<Object>} n8n response with AI answer
  */
-async function sendChatMessageToWebhook(chatId, message, messageHistory = [], maxRetries = 3) {
+async function sendChatMessageToWebhook(chatId, message, messageHistory = [], userLang = 'en', maxRetries = 3) {
   return retryWebhook(async () => {
-    return await sendChatMessageToWebhookInternal(chatId, message, messageHistory);
+    return await sendChatMessageToWebhookInternal(chatId, message, messageHistory, userLang);
   }, maxRetries);
 }
 
@@ -262,9 +266,10 @@ async function sendChatMessageToWebhook(chatId, message, messageHistory = [], ma
  * @param {string} chatId - Chat ID
  * @param {string} message - User message
  * @param {Array} messageHistory - Previous messages in the chat
+ * @param {string} userLang - User language code (e.g. 'tr', 'en')
  * @returns {Promise<Object>} n8n response with AI answer
  */
-async function sendChatMessageToWebhookInternal(chatId, message, messageHistory = []) {
+async function sendChatMessageToWebhookInternal(chatId, message, messageHistory = [], userLang = 'en') {
   const webhookUrl = process.env.N8N_WEBHOOK_URL_CHAT;
   
   if (!webhookUrl || webhookUrl.trim() === '') {
@@ -281,6 +286,7 @@ async function sendChatMessageToWebhookInternal(chatId, message, messageHistory 
       chatId,
       message,
       messageHistory,
+      userLang,
       timestamp: new Date().toISOString(),
     };
 
@@ -288,7 +294,8 @@ async function sendChatMessageToWebhookInternal(chatId, message, messageHistory 
     logger.info(`Payload:`, { 
       chatId, 
       message: message.substring(0, 100), // Log first 100 chars
-      messageHistoryLength: messageHistory.length 
+      messageHistoryLength: messageHistory.length,
+      userLang,
     });
 
     const response = await axios.post(webhookUrl, payload, {

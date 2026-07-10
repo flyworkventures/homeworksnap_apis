@@ -8,15 +8,30 @@ const logger = require('../utils/logger');
 const { uploadFile, deleteFile } = require('../utils/bunnyCDN');
 const { sendHomeworkImageToWebhook } = require('../utils/n8nWebhook');
 
+const VALID_LANGS = ['en', 'tr', 'de', 'fr', 'es', 'it', 'pt', 'ru', 'ar', 'zh', 'ja', 'ko'];
+
+const resolveUserLang = (req) => {
+  const raw =
+    req.body?.language ||
+    req.body?.lang ||
+    req.body?.userLang ||
+    req.headers['x-user-lang'] ||
+    req.headers['accept-language']?.split(',')[0]?.split('-')[0] ||
+    'en';
+  const lang = String(raw).trim().toLowerCase().slice(0, 5);
+  return VALID_LANGS.includes(lang) ? lang : 'en';
+};
+
 /**
  * Upload homework image
  * POST /api/homework/images
  * Content-Type: multipart/form-data
- * Body: image (file)
+ * Body: image (file), language (optional, e.g. 'tr' | 'en')
  */
 const uploadHomeworkImage = async (req, res, next) => {
   try {
     const { uid } = req.user;
+    const userLang = resolveUserLang(req);
 
     if (!req.file) {
       return res.status(400).json({
@@ -26,7 +41,7 @@ const uploadHomeworkImage = async (req, res, next) => {
       });
     }
 
-    logger.info(`Upload homework image request for user: ${uid}, file size: ${req.file.size}`);
+    logger.info(`Upload homework image request for user: ${uid}, file size: ${req.file.size}, lang: ${userLang}`);
 
     // Get user ID from database
     const users = await db.query(
@@ -97,7 +112,7 @@ const uploadHomeworkImage = async (req, res, next) => {
     );
 
     // Send to n8n webhook asynchronously (don't wait for response)
-    sendHomeworkImageToWebhook(cdnUrl, uid, chatId)
+    sendHomeworkImageToWebhook(cdnUrl, uid, chatId, userLang)
       .then(async (webhookResult) => {
         try {
           logger.info(`n8n webhook result for homework image ${homeworkImageId}:`, {
